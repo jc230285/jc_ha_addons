@@ -1,0 +1,34 @@
+{
+  "name": "Custom MariaDB Server",
+  "version": "1.0.0",
+  "slug": "mariadb_custom",
+  "description": "MariaDB server with Galera replication support",
+  "startup": "services",
+  "boot": "auto",
+  "arch": ["aarch64", "amd64", "armv7"],
+  "host_network": true,
+  "options": {
+    "root_password": "",
+    "database": "homeassistant",
+    "user": "",
+    "user_password": "",
+    "replicate_from_ip": "192.168.68.2",
+    "replicate_user": "replicator",
+    "replicate_password": "",
+    "node_name": "haos-node",
+    "node_address": "192.168.71.215",
+    "cluster_name": "haos_cluster"
+  },
+  "schema": {
+    "root_password": "str",
+    "database": "str",
+    "user": "str",
+    "user_password": "str",
+    "replicate_from_ip": "str",
+    "replicate_user": "str",
+    "replicate_password": "str",
+    "node_name": "str",
+    "node_address": "str",
+    "cluster_name": "str"
+  }
+}
