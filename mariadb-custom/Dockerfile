@@ -8,7 +8,9 @@ RUN apt-get update && \
 
 COPY run.sh /run.sh
 COPY galera.cnf /etc/mysql/mariadb.conf.d/60-galera.cnf
+COPY rootfs/ / # Add s6 service directory
 
 RUN chmod a+x /run.sh
 
-CMD [ "/run.sh" ]
+# Remove CMD, let s6-overlay handle init
+# CMD [ "/run.sh" ]
