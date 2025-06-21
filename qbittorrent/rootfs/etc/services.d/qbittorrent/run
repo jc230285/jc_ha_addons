@@ -1,0 +1,5 @@
+#!/usr/bin/with-contenv bash
+/init &
+cd /opt/flood
+node server/bin/www --port 3000 --rundir /config &
+wait
