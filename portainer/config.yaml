@@ -1,0 +1,20 @@
+name: Portainer
+version: "1.0.0"
+description: "Portainer - Manage your Docker containers via a web UI."
+startup: services
+boot: auto
+panel_icon: mdi:docker
+webui: http://[HOST]:[PORT:9000]
+ports:
+  9000/tcp: 9000
+host_network: true
+privileged:
+  - NET_ADMIN
+  - SYS_ADMIN
+map:
+  - config:rw
+schema: {}
+arch:
+  - amd64
+  - armv7
+  - aarch64

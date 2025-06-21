@@ -1,0 +1,26 @@
+name: qBittorrent
+version: "1.0.0"
+description: "qBittorrent with Flood UI - A free and reliable P2P BitTorrent client."
+startup: services
+boot: auto
+panel_icon: mdi:download
+webui: http://[HOST]:[PORT:8080] (qBittorrent), http://[HOST]:[PORT:3000] (Flood)
+ports:
+  8080/tcp: 8080 # Web UI
+  6881/tcp: 6881 # BitTorrent
+  6881/udp: 6881 # BitTorrent
+  3000/tcp: 3000 # Flood UI
+host_network: false
+privileged: []
+map:
+  - config:rw
+  - media:rw
+  - share:rw
+  - addons:rw
+  - backup:rw
+  - ssl:rw
+schema: {}
+arch:
+  - amd64
+  - armv7
+  - aarch64
