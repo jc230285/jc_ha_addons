@@ -1,6 +1,6 @@
 name: qBittorrent
 slug: qbittorrent
-version: "1.0.0"
+version: "1.0.1"
 description: "qBittorrent with Flood UI - A free and reliable P2P BitTorrent client."
 startup: services
 boot: auto
