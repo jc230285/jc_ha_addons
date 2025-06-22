@@ -1,23 +1,7 @@
 #!/command/with-contenv bashio
 # Home Assistant Community Add-on: qBittorrent
-# Runs qBittorrent and Flood UI
+# Runs qBittorrent
 
-bashio::log.info 'Starting qBittorrent and Flood...'
+bashio::log.info 'Starting qBittorrent...'
 
-# Install Flood if not already installed
-if [ ! -d /opt/flood ]; then
-    apk add --no-cache nodejs npm git
-    cd /opt || exit 1
-    git clone https://github.com/jesec/flood.git
-    cd flood || exit 1
-    git checkout master
-    npm install --production
-else
-    cd /opt/flood || exit 1
-fi
-
-# Start Flood UI in background
-node server/bin/www --port 3000 --rundir /config &
-
-# Start qBittorrent as the main process
 exec /init
