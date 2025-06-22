@@ -1,10 +1,21 @@
 #!/usr/bin/with-contenv bashio
 
+# Install Flood if not already installed
+if [ ! -d /opt/flood ]; then
+    apk add --no-cache nodejs npm git
+    cd /opt || exit 1
+    git clone https://github.com/jesec/flood.git
+    cd flood || exit 1
+    git checkout master
+    npm install --production
+else
+    cd /opt/flood || exit 1
+fi
+
 # Start qBittorrent in the background
 /init &
 
 # Start Flood UI
-cd /opt/flood || exit 1
 node server/bin/www --port 3000 --rundir /config &
 
 # Wait for background jobs
