@@ -1,0 +1,12 @@
+#!/command/with-contenv bashio
+# ==============================================================================
+# Start Portainer service
+# ==============================================================================
+
+bashio::log.info "Starting Portainer..."
+
+cd /opt/portainer || bashio::exit.nok "Could not change to Portainer directory"
+
+exec ./portainer \
+    --data /data \
+    --no-analytics
