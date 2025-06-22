@@ -13,8 +13,8 @@ ENV XDG_CONFIG_HOME="/config/xdg"
 # hadolint ignore=DL3003,DL3042
 RUN \
   apk add --no-cache \
-    curl=8.8.0-r1 \
-    jq=1.7.1-r1 \
+    curl \
+    jq \
   \
   && if [ "${BUILD_ARCH}" = "aarch64" ]; then PORTAINER_ARCH="arm64"; \
   elif [ "${BUILD_ARCH}" = "amd64" ]; then PORTAINER_ARCH="amd64"; \
