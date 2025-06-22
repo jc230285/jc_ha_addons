@@ -6,5 +6,15 @@
 # ===============================================================================
 
 bashio::log.info 'Starting qBittorrent...'
+echo "PATH: $PATH"
+echo "USER: $(whoami)"
+echo "which qbittorrent-nox: $(which qbittorrent-nox)"
+qbittorrent-nox --version || echo "Could not get qbittorrent-nox version"
+echo "ls -l /config:"
+ls -l /config || echo "/config not found"
+echo "ls -l /:"
+ls -l /
+
+env
 
 exec qbittorrent-nox --webui-port=8080 --profile=/config
