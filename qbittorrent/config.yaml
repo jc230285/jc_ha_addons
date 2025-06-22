@@ -17,3 +17,5 @@ map:
   - media:rw
 ports:
   8080/tcp: 8080
+  6881/tcp: 6881
+  6881/udp: 6881
