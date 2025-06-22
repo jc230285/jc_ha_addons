@@ -1,7 +1,7 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Install dependencies for qBittorrent and Flood UI if needed
+# Install dependencies for qBittorrent and Flood UI
 # RUN apk add --no-cache nodejs npm
 
 COPY install_flood.sh /install_flood.sh

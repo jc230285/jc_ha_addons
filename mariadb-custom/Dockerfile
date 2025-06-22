@@ -12,5 +12,4 @@ COPY rootfs/ / # Add s6 service directory
 
 RUN chmod a+x /run.sh
 
-# Remove CMD, let s6-overlay handle init
-# CMD [ "/run.sh" ]
+# s6-overlay will handle service startup

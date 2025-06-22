@@ -1,5 +1,5 @@
 #!/usr/bin/with-contenv bash
 /init &
-cd /opt/flood
+cd /opt/flood || exit 1
 node server/bin/www --port 3000 --rundir /config &
 wait

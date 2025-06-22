@@ -1,3 +1,4 @@
-#!/usr/bin/with-contenv bash
+#!/usr/bin/with-contenv bashio
+
 # Start Portainer
 exec /portainer

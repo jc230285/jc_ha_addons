@@ -1,8 +1,8 @@
 {
-  "name": "Custom MariaDB Server",
+  "name": "MariaDB_Galera",
   "version": "1.0.0",
-  "slug": "mariadb_custom",
-  "description": "MariaDB server with Galera replication support",
+  "slug": "mariadb_galera",
+  "description": "MariaDB server with Galera cluster replication support",
   "startup": "services",
   "boot": "auto",
   "arch": ["aarch64", "amd64", "armv7"],

@@ -1,4 +1,5 @@
 name: qBittorrent
+slug: qbittorrent
 version: "1.0.0"
 description: "qBittorrent with Flood UI - A free and reliable P2P BitTorrent client."
 startup: services
@@ -19,6 +20,7 @@ map:
   - addons:rw
   - backup:rw
   - ssl:rw
+options: {}
 schema: {}
 arch:
   - amd64

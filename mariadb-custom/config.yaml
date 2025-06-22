@@ -1,7 +1,7 @@
-name: "Custom MariaDB Server"
+name: "MariaDB_Galera"
 version: "1.0.0"
-slug: "mariadb_custom"
-description: "MariaDB server with Galera replication support"
+slug: "mariadb_galera"
+description: "MariaDB server with Galera cluster replication support"
 startup: services
 boot: auto
 arch:
@@ -18,6 +18,9 @@ options:
   replicate_from_ip: "192.168.68.2"
   replicate_user: "replicator"
   replicate_password: ""
+  node_name: "haos-node"
+  node_address: "192.168.71.215"
+  cluster_name: "haos_cluster"
 
 schema:
   root_password: str
@@ -27,3 +30,6 @@ schema:
   replicate_from_ip: str
   replicate_user: str
   replicate_password: str
+  node_name: str
+  node_address: str
+  cluster_name: str
