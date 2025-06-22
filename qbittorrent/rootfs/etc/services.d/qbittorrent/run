@@ -1,4 +1,4 @@
-#!/usr/bin/with-contenv bash
+#!/command/with-contenv bashio
 
 # Install Flood if not already installed
 if [ ! -d /opt/flood ]; then
@@ -12,11 +12,8 @@ else
     cd /opt/flood || exit 1
 fi
 
-# Start qBittorrent in the background
-/init &
-
-# Start Flood UI
+# Start Flood UI in background
 node server/bin/www --port 3000 --rundir /config &
 
-# Wait for background jobs
-wait
+# Start qBittorrent as the main process
+exec /init
