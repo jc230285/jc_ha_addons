@@ -1,7 +1,7 @@
 ---
 name: "MariaDB_Galera"
 version: "1.0.0"
-slug: "mariadb_galera"
+slug: "mariadb"
 description: "MariaDB server with Galera cluster replication support"
 startup: services
 boot: auto
