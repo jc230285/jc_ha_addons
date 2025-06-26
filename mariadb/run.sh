@@ -39,32 +39,4 @@ fi
 
 # Start MariaDB with Galera
 bashio::log.info "Starting MariaDB with Galera cluster support..."
-mysqld_safe --wsrep-new-cluster &
-
-# Wait for MariaDB to be ready
-until mysqladmin ping --silent; do
-  sleep 1
-done
-
-# Set root password if provided
-if [ -n "$ROOT_PWD" ]; then
-    mysql -uroot <<EOF
-ALTER USER 'root'@'localhost' IDENTIFIED BY '$ROOT_PWD';
-FLUSH PRIVILEGES;
-EOF
-fi
-
-# Create database and user if not exist
-mysql -uroot -p"$ROOT_PWD" <<EOF
-CREATE DATABASE IF NOT EXISTS \`$DB_NAME\`;
-CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASS';
-GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO '$DB_USER'@'%';
-CREATE USER IF NOT EXISTS '$REPL_USER'@'%' IDENTIFIED BY '$REPL_PASS';
-GRANT RELOAD, LOCK TABLES, PROCESS, REPLICATION CLIENT ON *.* TO '$REPL_USER'@'%';
-FLUSH PRIVILEGES;
-EOF
-
-bashio::log.info "MariaDB Galera cluster ready for Home Assistant."
-
-# Keep container running (handled by s6-overlay)
-wait
+exec mysqld_safe --wsrep-new-cluster
