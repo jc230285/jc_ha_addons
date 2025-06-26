@@ -13,6 +13,14 @@ pid-file = /run/mysqld/mysqld.pid
 # Networking
 bind-address = 0.0.0.0
 port = 3306
+skip-name-resolve
+max_allowed_packet = 1G
+max_connect_errors = 1000000
+
+# Connection limits
+max_connections = 200
+wait_timeout = 28800
+interactive_timeout = 28800
 
 # Logging
 log-error = /data/databases/mariadb.err
@@ -36,11 +44,6 @@ server-id = 1
 
 # Performance settings
 thread_cache_size = 8
-max_connections = 100
-
-# Safety settings
-max_allowed_packet = 1G
-max_connect_errors = 1000000
 
 # Disable external file access
 secure_file_priv = NULL

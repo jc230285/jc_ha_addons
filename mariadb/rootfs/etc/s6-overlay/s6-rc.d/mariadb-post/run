@@ -70,8 +70,10 @@ for login in $(bashio::config "logins|keys"); do
     if mysql -e "SET PASSWORD FOR '${USERNAME}'@'%' = PASSWORD('${PASSWORD}');" 2> /dev/null; then
         bashio::log.info "Update user ${USERNAME}"
     else
-        bashio::log.info "Create user ${USERNAME}"
+        bashio::log.info "Create user ${USERNAME} with remote access"
         mysql -e "CREATE USER '${USERNAME}'@'%' IDENTIFIED BY '${PASSWORD}';" 2> /dev/null || true
+        # Also create localhost access for compatibility
+        mysql -e "CREATE USER '${USERNAME}'@'localhost' IDENTIFIED BY '${PASSWORD}';" 2> /dev/null || true
     fi
 done
 
@@ -86,9 +88,13 @@ for right in $(bashio::config "rights|keys"); do
         bashio::log.info "Granting ${PRIVILEGES} to ${USERNAME} on ${DATABASE}"
         mysql -e "REVOKE ALL PRIVILEGES ON ${DATABASE}.* FROM '${USERNAME}'@'%';" || true
         mysql -e "GRANT ${PRIVILEGES} ON ${DATABASE}.* TO '${USERNAME}'@'%';" || true
+        # Also grant to localhost for compatibility
+        mysql -e "REVOKE ALL PRIVILEGES ON ${DATABASE}.* FROM '${USERNAME}'@'localhost';" || true
+        mysql -e "GRANT ${PRIVILEGES} ON ${DATABASE}.* TO '${USERNAME}'@'localhost';" || true
     else
         bashio::log.info "Granting all privileges to ${USERNAME} on ${DATABASE}"
         mysql -e "GRANT ALL PRIVILEGES ON ${DATABASE}.* TO '${USERNAME}'@'%';" 2> /dev/null || true
+        mysql -e "GRANT ALL PRIVILEGES ON ${DATABASE}.* TO '${USERNAME}'@'localhost';" 2> /dev/null || true
     fi
 done
 

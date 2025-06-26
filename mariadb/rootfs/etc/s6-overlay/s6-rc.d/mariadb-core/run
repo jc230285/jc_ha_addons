@@ -8,6 +8,9 @@
 # Prepare extra arguments
 declare -a extra_args=()
 
+# Always bind to all interfaces for remote access
+extra_args+=("--bind-address=0.0.0.0")
+
 if bashio::config.has_value "mariadb_server_args"; then
   readarray -t server_args <<< "$(bashio::config 'mariadb_server_args')"
   extra_args+=("${server_args[@]}")
