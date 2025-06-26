@@ -1,98 +1,221 @@
-# Home Assistant Add-on: MariaDB_Galera
-
-MariaDB server with Galera cluster replication support.
+# Home Assistant Add-on: MariaDB
 
 ## Installation
 
-The installation of this add-on is pretty straightforward and not different in
-comparison to installing any other Home Assistant add-on.
+Follow these steps to get the add-on installed on your system:
 
-1. Click the "Install" button to install the add-on.
-1. Configure the add-on options (see Configuration section below).
-1. Start the "MariaDB_Galera" add-on
-1. Check the logs of the "MariaDB_Galera" add-on to see if everything went well.
-1. Configure Home Assistant to use the database.
+1. Navigate in your Home Assistant frontend to **Settings** -> **Add-ons** -> **Add-on store**.
+2. Find the "MariaDB" add-on and click it.
+3. Click on the "INSTALL" button.
 
-## Configuration
+## How to use
 
-This add-on requires configuration to set up the database properly.
+1. Set the `logins` -> `password` field to something strong and unique.
+2. Start the add-on.
+3. Check the add-on log output to see the result.
+4. Add the `recorder` integration to your Home Assistant configuration.
 
-### Option: `root_password`
+## Add-on Configuration
 
-Sets the password for the MariaDB root user.
+The MariaDB server add-on can be tweaked to your likings. This section
+describes each of the add-on configuration options.
 
-**Note**: _This option support secrets, e.g., `!secret mariadb_password`._
+Example add-on configuration:
 
-### Option: `database`
+```yaml
+databases:
+  - homeassistant
+logins:
+  - username: homeassistant
+    password: PASSWORD
+  - username: read_only_user
+    password: PASSWORD
+rights:
+  - username: homeassistant
+    database: homeassistant
+  - username: read_only_user
+    database: homeassistant
+    privileges:
+      - SELECT
+# Galera cluster configuration (optional)
+galera_enabled: true
+cluster_name: "homeassistant_cluster"
+node_name: "node1"
+node_address: "192.168.1.100"
+cluster_address: "192.168.1.100,192.168.1.101,192.168.1.102"
+wsrep_sst_user: "wsrep_sst"
+wsrep_sst_password: "SST_PASSWORD"
+```
 
-Database name that will be created for Home Assistant.
+### Option: `databases` (required)
 
-### Option: `user`
+Database name, e.g., `homeassistant`. Multiple are allowed.
 
-Username for the database user that Home Assistant will use.
+### Option: `logins` (required)
 
-### Option: `user_password`
+This section defines a create user definition in MariaDB. [Create User][createuser] documentation.
 
-Password for the database user that Home Assistant will use.
+### Option: `logins.username` (required)
 
-**Note**: _This option support secrets, e.g., `!secret mariadb_user_password`._
+Database user login, e.g., `homeassistant`. [User Name][username] documentation.
 
-### Option: `replicate_from_ip`
+### Option: `logins.password` (required)
 
-IP address of another MariaDB server to replicate from (for Galera clustering).
+Password for user login. This should be strong and unique.
 
-### Option: `replicate_user`
+### Option: `rights` (required)
 
-Username for replication between Galera nodes.
+This section grant privileges to users in MariaDB. [Grant][grant] documentation.
 
-### Option: `replicate_password`
+### Option: `rights.username` (required)
 
-Password for replication between Galera nodes.
+This should be the same user name defined in `logins` -> `username`.
 
-**Note**: _This option support secrets, e.g., `!secret mariadb_repl_password`._
+### Option: `rights.database` (required)
 
-### Option: `node_name`
+This should be the same database defined in `databases`.
 
-Name of this Galera cluster node.
+### Option: `rights.privileges` (optional)
 
-### Option: `node_address`
+A list of privileges to grant to this user from [grant][grant] like `SELECT` and `CREATE`.
+If omitted, grants `ALL PRIVILEGES` to the user. Restricting privileges of the user
+that Home Assistant uses is not recommended but if you want to allow other applications
+to view recorder data should create a user limited to read-only access on the database.
 
-IP address of this Galera cluster node.
+### Option: `mariadb_server_args` (optional)
 
-### Option: `cluster_name`
+Some users have experienced [errors][migration-issues] during Home Assistant schema updates on large databases.
+Defining the recommended parameters can help if there is RAM available.
 
-Name of the Galera cluster this node belongs to.
+Example: `--innodb_buffer_pool_size=512M`
 
-## Features
+## Galera Cluster Configuration
 
-- MariaDB server with Galera cluster support
-- Automatic database and user creation for Home Assistant
-- High availability through Galera clustering
-- Persistent data storage
+This add-on supports MariaDB Galera Cluster for high availability and synchronous replication across multiple nodes.
+
+### Option: `galera_enabled` (optional)
+
+Set to `true` to enable Galera clustering. Default: `false`
+
+### Option: `cluster_name` (optional)
+
+Name of the Galera cluster. All nodes in the same cluster must use the same name.
+Default: `"homeassistant_cluster"`
+
+### Option: `node_name` (optional)
+
+Unique name for this node within the cluster. Each node must have a different name.
+Default: `"node1"`
+
+### Option: `node_address` (required when galera_enabled is true)
+
+IP address of this node that other nodes can reach. This should be the actual IP address
+of the Home Assistant instance, not localhost or 127.0.0.1.
+
+### Option: `cluster_address` (required when galera_enabled is true)
+
+Comma-separated list of IP addresses of all nodes in the cluster. Include the current node's
+address in this list as well.
+
+Example: `"192.168.1.100,192.168.1.101,192.168.1.102"`
+
+### Option: `wsrep_sst_user` (optional)
+
+Username for State Snapshot Transfer (SST) authentication. This user is created automatically
+with the necessary privileges. Default: `"wsrep_sst"`
+
+### Option: `wsrep_sst_password` (required when galera_enabled is true)
+
+Password for the SST user. This must be the same on all nodes in the cluster and should be
+strong and unique.
+
+## Setting up a Galera Cluster
+
+### Prerequisites
+
+1. At least 3 Home Assistant instances (recommended for quorum)
+2. Reliable network connectivity between all nodes
+3. Synchronized time on all nodes (use NTP)
+4. Same MariaDB add-on version on all nodes
+
+### Step-by-Step Setup
+
+#### Step 1: Configure the First Node (Bootstrap Node)
+
+1. Install and configure the MariaDB add-on with Galera enabled
+2. Set `cluster_address` to include all planned nodes
+3. Start the add-on - it will automatically bootstrap the cluster
+
+Example configuration for the first node:
+
+```yaml
+galera_enabled: true
+cluster_name: "homeassistant_cluster"
+node_name: "node1"
+node_address: "192.168.1.100"
+cluster_address: "192.168.1.100,192.168.1.101,192.168.1.102"
+wsrep_sst_user: "wsrep_sst"
+wsrep_sst_password: "your_strong_sst_password"
+```
+
+#### Step 2: Add Additional Nodes
+
+1. Configure each additional node with the same cluster settings
+2. Use unique `node_name` and `node_address` for each node
+3. Keep `cluster_name`, `cluster_address`, and SST credentials identical
+4. Start the add-on - it will join the existing cluster
+
+Example configuration for the second node:
+
+```yaml
+galera_enabled: true
+cluster_name: "homeassistant_cluster"
+node_name: "node2"
+node_address: "192.168.1.101"
+cluster_address: "192.168.1.100,192.168.1.101,192.168.1.102"
+wsrep_sst_user: "wsrep_sst"
+wsrep_sst_password: "your_strong_sst_password"
+```
+
+### Important Notes
+
+- **Quorum**: For automatic split-brain protection, use an odd number of nodes (3, 5, 7, etc.)
+- **Bootstrapping**: Only the first node bootstraps the cluster. Additional nodes join automatically
+- **State Transfer**: New nodes will automatically sync data from existing nodes
+- **Network**: Ensure ports 3306 (MySQL) and 4567 (Galera) are accessible between nodes
+- **Consistency**: All writes are synchronously replicated to all nodes
+
+### Monitoring Cluster Status
+
+You can check cluster status by connecting to any node and running:
+
+```sql
+SHOW STATUS LIKE 'wsrep%';
+```
+
+Key status variables:
+
+- `wsrep_ready`: Should be 'ON'
+- `wsrep_cluster_size`: Number of nodes in cluster
+- `wsrep_cluster_status`: Should be 'Primary'
+- `wsrep_local_state_comment`: Should be 'Synced'
+
+### Troubleshooting
+
+- **Split-brain**: If the cluster splits, check network connectivity and restart nodes
+- **SST Issues**: Verify SST user credentials are identical on all nodes
+- **Bootstrap Issues**: If cluster won't start, check that only one node is bootstrapping
 
 ## Home Assistant Configuration
 
-To use this add-on with Home Assistant, add the following to your `configuration.yaml`:
+MariaDB will be used by the `recorder` and `history` components within Home Assistant. For more information about setting this up, see the [recorder integration][mariadb-ha-recorder] documentation for Home Assistant.
+
+Example Home Assistant configuration:
 
 ```yaml
 recorder:
-  db_url: mysql://username:password@core-mariadb-galera:3306/homeassistant?charset=utf8mb4
+  db_url: mysql://homeassistant:password@core-mariadb/homeassistant?charset=utf8mb4
 ```
-
-Replace `username`, `password`, and `homeassistant` with the values you configured in the add-on options.
-
-## Changelog & Releases
-
-This repository keeps a change log using [GitHub's releases][releases]
-functionality.
-
-Releases are based on [Semantic Versioning][semver], and use the format
-of `MAJOR.MINOR.PATCH`. In a nutshell, the version will be incremented
-based on the following:
-
-- `MAJOR`: Incompatible or major changes.
-- `MINOR`: Backwards-compatible new features.
-- `PATCH`: Backwards-compatible bug fixes.
 
 ## Support
 
@@ -100,52 +223,21 @@ Got questions?
 
 You have several options to get them answered:
 
-- The [Home Assistant Community Add-ons Discord chat server][discord] for add-on
-  support and feature requests.
-- The [Home Assistant Discord chat server][discord-ha] for general Home
-  Assistant discussions and questions.
+- The [Home Assistant Discord Chat Server][discord].
 - The Home Assistant [Community Forum][forum].
 - Join the [Reddit subreddit][reddit] in [/r/homeassistant][reddit]
 
-You could also [open an issue here][issue] GitHub.
+In case you've found a bug, please [open an issue on our GitHub][issue].
 
-## Authors & contributors
-
-The original setup of this repository is by [James Criswell][jc21].
-
-For a full list of all authors and contributors,
-check [the contributor's page][contributors].
-
-## License
-
-MIT License
-
-Copyright (c) 2025 James Criswell
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-[contributors]: https://github.com/jc21/ha_addons/graphs/contributors
-[discord-ha]: https://discord.gg/c5DvZ4e
-[discord]: https://discord.me/hassioaddons
-[forum]: https://community.home-assistant.io?u=frenck
-[issue]: https://github.com/jc21/ha_addons/issues
-[jc21]: https://github.com/jc21
+[createuser]: https://mariadb.com/kb/en/create-user/
+[username]: https://mariadb.com/kb/en/create-user/#user-name-component
+[hostname]: https://mariadb.com/kb/en/create-user/#host-name-component
+[grant]: https://mariadb.com/kb/en/grant/
+[migration-issues]: https://github.com/home-assistant/core/issues/125339
+[mariadb-ha-recorder]: https://www.home-assistant.io/integrations/recorder/
+[discord]: https://discord.gg/c5DvZ4e
+[forum]: https://community.home-assistant.io
+[i386-shield]: https://img.shields.io/badge/i386-yes-green.svg
+[issue]: https://github.com/home-assistant/addons/issues
 [reddit]: https://reddit.com/r/homeassistant
-[releases]: https://github.com/jc21/ha_addons/releases
-[semver]: http://semver.org/spec/v2.0.0.html
+[repository]: https://github.com/hassio-addons/repository

@@ -1,57 +1,65 @@
 ---
-name: "MariaDB_Galera"
-version: "1.0.0"
-slug: "mariadb"
-description: "MariaDB server with Galera cluster replication support"
-startup: services
-boot: auto
-init: false
+version: 2.7.2
+slug: mariadb
+name: MariaDB
+description: A SQL database server
+url: https://github.com/home-assistant/addons/tree/master/mariadb
 arch:
+  - armhf
+  - armv7
   - aarch64
   - amd64
-  - armv7
-host_network: true
-
-services:
-  - mysql:provide
-
+  - i386
+backup_post: unlock-tables-for-backup
+backup_pre: lock-tables-for-backup
+image: homeassistant/{arch}-addon-mariadb
+init: false
 options:
   databases:
     - homeassistant
-  users:
-    - username: homeassistant
-      password: ""
-  rights:
-    - username: homeassistant
-      database: homeassistant
   logins:
-    - username: homeassistant
-      password: ""
+    - password: null
+      username: homeassistant
+  rights:
+    - database: homeassistant
+      username: homeassistant
   # Galera cluster options
-  root_password: ""
-  replicate_from_ip: "192.168.68.2"
-  replicate_user: "replicator"
-  replicate_password: ""
-  node_name: "haos-node"
-  node_address: "192.168.71.215"
-  cluster_name: "haos_cluster"
-
+  galera_enabled: false
+  cluster_name: "homeassistant_cluster"
+  node_name: "node1"
+  node_address: ""
+  cluster_address: ""
+  wsrep_sst_user: "wsrep_sst"
+  wsrep_sst_password: ""
+ports:
+  3306/tcp: null
+  4567/tcp: null
+  4568/tcp: null
+  4444/tcp: null
 schema:
   databases:
     - str
-  users:
-    - username: str
-      password: str
-  rights:
-    - username: str
-      database: str
   logins:
     - username: str
-      password: str
-  root_password: "str?"
-  replicate_from_ip: "str?"
-  replicate_user: "str?"
-  replicate_password: "str?"
-  node_name: "str?"
-  node_address: "str?"
-  cluster_name: "str?"
+      password: password
+  rights:
+    - database: str
+      privileges:
+        - "list(ALTER|CREATE|CREATE ROUTINE|CREATE TEMPORARY TABLES|\
+          CREATE VIEW|DELETE|DELETE HISTORY|DROP|EVENT|GRANT OPTION|INDEX|\
+          INSERT|LOCK TABLES|SELECT|SHOW VIEW|TRIGGER|UPDATE)?"
+      username: str
+  mariadb_server_args:
+    - str?
+  # Galera cluster options
+  galera_enabled: bool?
+  cluster_name: str?
+  node_name: str?
+  node_address: str?
+  cluster_address: str?
+  wsrep_sst_user: str?
+  wsrep_sst_password: password?
+services:
+  - mysql:provide
+startup: system
+timeout: 300

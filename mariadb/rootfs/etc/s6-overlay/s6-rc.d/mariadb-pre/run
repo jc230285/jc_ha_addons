@@ -1,0 +1,116 @@
+#!/command/with-contenv bashio
+# vim: ft=bash
+# shellcheck shell=bash
+# ==============================================================================
+# Pre-start initialization of MariaDB service
+# ==============================================================================
+MARIADB_DATA=/data/databases
+NEW_INSTALL=false
+
+if ! bashio::fs.directory_exists "${MARIADB_DATA}"; then
+    NEW_INSTALL=true
+fi
+
+# Save variables
+echo -n "${MARIADB_DATA}" > /var/run/s6/container_environment/MARIADB_DATA
+echo -n "${NEW_INSTALL}" > /var/run/s6/container_environment/NEW_INSTALL
+
+# Redirect log output
+mkdir -p "${MARIADB_DATA}"
+rm -f "${MARIADB_DATA}/mariadb.err"
+ln -s /proc/1/fd/1 "${MARIADB_DATA}/mariadb.err"
+
+# Init mariadb
+if bashio::var.true "${NEW_INSTALL}"; then
+    bashio::log.info "Create a new mariadb"
+    mysql_install_db --user=root --datadir="${MARIADB_DATA}" --skip-name-resolve --skip-test-db > /dev/null
+else
+    bashio::log.info "Using existing mariadb"
+fi
+
+# Generate Galera configuration if enabled
+if bashio::config.true 'galera_enabled'; then
+    bashio::log.info "Galera clustering is enabled, generating configuration..."
+
+    CLUSTER_NAME=$(bashio::config 'cluster_name' 'homeassistant_cluster')
+    NODE_NAME=$(bashio::config 'node_name' 'node1')
+    NODE_ADDRESS=$(bashio::config 'node_address')
+    CLUSTER_ADDRESS=$(bashio::config 'cluster_address')
+    SST_USER=$(bashio::config 'wsrep_sst_user' 'wsrep_sst')
+    SST_PASSWORD=$(bashio::config 'wsrep_sst_password')
+
+    # Validate required Galera parameters
+    if [ -z "${NODE_ADDRESS}" ]; then
+        bashio::log.fatal "Galera enabled but node_address is not set"
+        exit 1
+    fi
+
+    if [ -z "${CLUSTER_ADDRESS}" ]; then
+        bashio::log.fatal "Galera enabled but cluster_address is not set"
+        exit 1
+    fi
+
+    if [ -z "${SST_PASSWORD}" ]; then
+        bashio::log.warning "Galera enabled but wsrep_sst_password is not set. This may cause SST issues."
+    fi
+
+    # Create Galera configuration directory
+    mkdir -p /etc/mysql/mariadb.conf.d
+
+    # Create Galera configuration
+    cat > /etc/mysql/mariadb.conf.d/60-galera.cnf << EOF
+[galera]
+# Galera Provider Configuration
+wsrep_on=ON
+wsrep_provider=/usr/lib/galera/libgalera_smm.so
+
+# Galera Cluster Configuration
+wsrep_cluster_name="${CLUSTER_NAME}"
+wsrep_cluster_address="gcomm://${CLUSTER_ADDRESS}"
+
+# Galera Synchronization Configuration
+wsrep_sst_method=rsync
+
+# Galera Node Configuration
+wsrep_node_address="${NODE_ADDRESS}"
+wsrep_node_name="${NODE_NAME}"
+
+# Galera Port Configuration
+wsrep_provider_options="gmcast.listen_addr=tcp://0.0.0.0:4567"
+
+# Additional settings for Galera compatibility
+binlog_format=row
+default_storage_engine=InnoDB
+innodb_autoinc_lock_mode=2
+innodb_doublewrite=1
+innodb_flush_log_at_trx_commit=2
+
+# Query cache disabled for Galera
+query_cache_type=0
+query_cache_size=0
+
+# Slave lag settings
+wsrep_slave_threads=1
+wsrep_certify_nonPK=1
+wsrep_max_ws_rows=131072
+wsrep_max_ws_size=1073741824
+wsrep_debug=0
+wsrep_convert_LOCK_to_trx=0
+wsrep_retry_autocommit=1
+wsrep_auto_increment_control=1
+
+EOF
+
+    if [ -n "${SST_PASSWORD}" ]; then
+        echo "wsrep_sst_auth=${SST_USER}:${SST_PASSWORD}" >> /etc/mysql/mariadb.conf.d/60-galera.cnf
+    fi
+
+    bashio::log.info "Galera configuration generated successfully"
+    bashio::log.info "Node: ${NODE_NAME} (${NODE_ADDRESS})"
+    bashio::log.info "Cluster: ${CLUSTER_NAME}"
+    bashio::log.info "Cluster nodes: ${CLUSTER_ADDRESS}"
+else
+    # Remove Galera configuration if it exists but is disabled
+    rm -f /etc/mysql/mariadb.conf.d/60-galera.cnf
+    bashio::log.info "Galera clustering is disabled"
+fi

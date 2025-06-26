@@ -1,0 +1,87 @@
+#!/command/with-contenv bashio
+# vim: ft=bash
+# shellcheck shell=bash
+# ==============================================================================
+# Galera cluster bootstrap helper
+# ==============================================================================
+
+# Check if this is the first node in the cluster
+function is_bootstrap_node() {
+    local node_address="${1}"
+    local cluster_address="${2}"
+    local first_node
+
+    # Extract first IP from cluster address
+    first_node=$(echo "${cluster_address}" | cut -d',' -f1 | xargs)
+
+    if [ "${node_address}" = "${first_node}" ]; then
+        return 0  # This is the bootstrap node
+    else
+        return 1  # This is not the bootstrap node
+    fi
+}
+
+# Check if cluster is already running
+function is_cluster_running() {
+    local cluster_address="${1}"
+
+    # Try to connect to each node in cluster
+    IFS=',' read -ra NODES <<< "${cluster_address}"
+    for node in "${NODES[@]}"; do
+        node=$(echo "${node}" | xargs)  # trim whitespace
+        if mysqladmin ping -h "${node}" -P 3306 --connect-timeout=5 2>/dev/null; then
+            return 0  # Found a running node
+        fi
+    done
+
+    return 1  # No running nodes found
+}
+
+# Main logic
+if bashio::config.true 'galera_enabled'; then
+    NODE_ADDRESS=$(bashio::config 'node_address')
+    CLUSTER_ADDRESS=$(bashio::config 'cluster_address')
+
+    if [ -z "${NODE_ADDRESS}" ] || [ -z "${CLUSTER_ADDRESS}" ]; then
+        bashio::log.error "Galera is enabled but node_address or cluster_address is not set"
+        exit 1
+    fi
+
+    if is_bootstrap_node "${NODE_ADDRESS}" "${CLUSTER_ADDRESS}"; then
+        bashio::log.info "This is the bootstrap node for the cluster"
+
+        # Check if this is a completely new cluster
+        if ! bashio::fs.file_exists "/data/databases/grastate.dat"; then
+            bashio::log.info "New cluster detected, will bootstrap"
+            export GALERA_NEW_CLUSTER="true"
+        elif ! is_cluster_running "${CLUSTER_ADDRESS}"; then
+            bashio::log.info "Existing cluster appears to be down, will bootstrap"
+            export GALERA_NEW_CLUSTER="true"
+        else
+            bashio::log.info "Cluster is already running, joining existing cluster"
+            export GALERA_NEW_CLUSTER="false"
+        fi
+    else
+        bashio::log.info "This is not the bootstrap node, will join existing cluster"
+        export GALERA_NEW_CLUSTER="false"
+
+        # Wait for bootstrap node to be available
+        bootstrap_node=$(echo "${CLUSTER_ADDRESS}" | cut -d',' -f1 | xargs)
+        bashio::log.info "Waiting for bootstrap node ${bootstrap_node} to be available..."
+
+        timeout=300  # 5 minutes timeout
+        while [ ${timeout} -gt 0 ] && ! mysqladmin ping -h "${bootstrap_node}" -P 3306 --connect-timeout=5 2>/dev/null; do
+            sleep 5
+            timeout=$((timeout - 5))
+        done
+
+        if [ ${timeout} -le 0 ]; then
+            bashio::log.error "Timeout waiting for bootstrap node to become available"
+            exit 1
+        fi
+
+        bashio::log.info "Bootstrap node is available, proceeding to join cluster"
+    fi
+else
+    export GALERA_NEW_CLUSTER="false"
+fi

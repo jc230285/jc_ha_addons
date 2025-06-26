@@ -1,0 +1,51 @@
+[mysql]
+default-character-set = utf8mb4
+
+[mysqld]
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+
+# Basic settings
+datadir = /data/databases
+socket = /run/mysqld/mysqld.sock
+pid-file = /run/mysqld/mysqld.pid
+
+# Networking
+bind-address = 0.0.0.0
+port = 3306
+
+# Logging
+log-error = /data/databases/mariadb.err
+slow_query_log = 1
+slow_query_log_file = /data/databases/slow.log
+long_query_time = 10
+
+# InnoDB settings (compatible with Galera)
+default_storage_engine = InnoDB
+innodb_autoinc_lock_mode = 2
+innodb_doublewrite = 1
+innodb_flush_log_at_trx_commit = 2
+innodb_file_per_table = 1
+innodb_buffer_pool_size = 128M
+
+# Replication settings (compatible with Galera)
+binlog_format = row
+log-bin = mysql-bin
+log-slave-updates = 1
+server-id = 1
+
+# Performance settings
+thread_cache_size = 8
+max_connections = 100
+
+# Safety settings
+max_allowed_packet = 1G
+max_connect_errors = 1000000
+
+# Disable external file access
+secure_file_priv = NULL
+
+[mysqldump]
+quick
+quote-names
+max_allowed_packet = 1G

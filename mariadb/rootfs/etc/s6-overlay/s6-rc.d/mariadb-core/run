@@ -1,0 +1,63 @@
+#!/command/with-contenv bashio
+# vim: ft=bash
+# shellcheck shell=bash
+# ==============================================================================
+# Start MariaDB service
+# ==============================================================================
+
+# Prepare extra arguments
+declare -a extra_args=()
+
+if bashio::config.has_value "mariadb_server_args"; then
+  readarray -t server_args <<< "$(bashio::config 'mariadb_server_args')"
+  extra_args+=("${server_args[@]}")
+fi
+
+# Handle Galera cluster startup
+if bashio::config.true 'galera_enabled'; then
+  bashio::log.info "Galera clustering is enabled"
+
+  # Check if this is a new cluster or if we're joining an existing one
+  GRASTATE_FILE="${MARIADB_DATA}/grastate.dat"
+  BOOTSTRAP_CLUSTER=false
+
+  if [ ! -f "${GRASTATE_FILE}" ]; then
+    bashio::log.info "No grastate.dat found - this appears to be a new cluster"
+    BOOTSTRAP_CLUSTER=true
+  else
+    # Check if we need to bootstrap by examining grastate.dat
+    if grep -q "safe_to_bootstrap: 1" "${GRASTATE_FILE}"; then
+      bashio::log.info "Safe to bootstrap flag is set - will bootstrap cluster"
+      BOOTSTRAP_CLUSTER=true
+    else
+      bashio::log.info "Joining existing cluster"
+      BOOTSTRAP_CLUSTER=false
+    fi
+  fi
+
+  # Add Galera-specific startup arguments
+  if [ "$BOOTSTRAP_CLUSTER" = true ]; then
+    bashio::log.info "Bootstrapping new Galera cluster"
+    extra_args+=("--wsrep-new-cluster")
+  fi
+
+  bashio::log.info "Starting MariaDB with Galera clustering enabled"
+else
+  bashio::log.info "Starting MariaDB in standalone mode"
+fi
+
+# Log startup parameters
+if [ ${#extra_args[@]} -gt 0 ]; then
+  bashio::log.info "Starting MariaDB with command line parameters: ${extra_args[*]}"
+else
+  bashio::log.info "Starting MariaDB with default parameters"
+fi
+
+# Start mariadb
+mkdir -p /run/mysqld
+
+if [ ${#extra_args[@]} -eq 0 ]; then
+  exec mysqld --datadir="${MARIADB_DATA}" --user=root < /dev/null
+else
+  exec mysqld --datadir="${MARIADB_DATA}" --user=root "${extra_args[@]}" < /dev/null
+fi
