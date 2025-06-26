@@ -11,9 +11,17 @@ ENV LANG C.UTF-8
 
 # hadolint ignore=DL3003,DL3042
 RUN \
-  apt-get update && \
-  apt-get install -y mariadb-server galera-4 rsync socat && \
-  apt-get clean && rm -rf /var/lib/apt/lists/*
+  apk add --no-cache \
+    mariadb \
+    mariadb-client \
+    mariadb-server-utils \
+    rsync \
+    socat \
+    galera \
+    mysql-client \
+  && mkdir -p /var/lib/mysql \
+  && chown -R mysql:mysql /var/lib/mysql \
+  && mysql_install_db --user=mysql --datadir=/var/lib/mysql
 
 # Copy configuration and scripts
 COPY run.sh /run.sh
