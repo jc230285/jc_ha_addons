@@ -1,0 +1,74 @@
+# Home Assistant Community Add-on: MariaDB_Galera
+
+[![Release][release-shield]][release] ![Project Stage][project-stage-shield] ![Project Maintenance][maintenance-shield]
+
+[![Discord][discord-shield]][discord] [![Community Forum][forum-shield]][forum]
+
+MariaDB server with Galera cluster replication support.
+
+## About
+
+MariaDB_Galera is a MariaDB server with Galera cluster replication support for Home Assistant. It provides a robust, high-availability database solution that can be used as the backend for Home Assistant's recorder component.
+
+{% if channel == "edge" %}
+## WARNING! THIS IS AN EDGE VERSION!
+
+This Home Assistant Add-ons repository contains edge builds of add-ons.
+Edge builds add-ons are based upon the latest development version.
+
+- They may not work at all.
+- They might stop working at any time.
+- They could have a negative impact on your system.
+
+This repository was created for:
+
+- Anybody willing to test.
+- Anybody interested in trying out upcoming add-ons or add-on features.
+- Developers.
+
+If you are more interested in stable releases of our add-ons:
+
+<https://github.com/hassio-addons/repository>
+
+{% endif %}
+{% if channel == "beta" %}
+## WARNING! THIS IS A BETA VERSION!
+
+This Home Assistant Add-ons repository contains beta releases of add-ons.
+
+- They might stop working at any time.
+- They could have a negative impact on your system.
+
+This repository was created for:
+
+- Anybody willing to test.
+- Anybody interested in trying out upcoming add-ons or add-on features.
+
+If you are more interested in stable releases of our add-ons:
+
+<https://github.com/hassio-addons/repository>
+
+{% endif %}
+
+## Configuration
+
+Set the following options in the add-on configuration:
+- `root_password`: MariaDB root password
+- `database`: Default database name
+- `user`: Database user
+- `user_password`: Database user password
+- `replicate_from_ip`: IP address to replicate from
+- `replicate_user`: Replication user
+- `replicate_password`: Replication password
+- `node_name`: Galera node name
+- `node_address`: Node IP address
+- `cluster_name`: Galera cluster name
+
+[discord-shield]: https://img.shields.io/discord/478094546522079232.svg
+[discord]: https://discord.me/hassioaddons
+[forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg
+[forum]: https://community.home-assistant.io?u=frenck
+[maintenance-shield]: https://img.shields.io/maintenance/yes/2025.svg
+[project-stage-shield]: https://img.shields.io/badge/project%20stage-production%20ready-brightgreen.svg
+[release-shield]: https://img.shields.io/badge/version-{{ version }}-blue.svg
+[release]: {{ repo }}/tree/{{ version }}

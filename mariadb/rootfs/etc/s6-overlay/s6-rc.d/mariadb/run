@@ -1,0 +1,8 @@
+#!/command/with-contenv bashio
+# ==============================================================================
+# Start MariaDB service
+# ==============================================================================
+
+bashio::log.info "Starting MariaDB with Galera cluster support..."
+
+exec /run.sh
