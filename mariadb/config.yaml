@@ -12,6 +12,9 @@ arch:
   - armv7
 host_network: true
 
+services:
+  - mysql:provide
+
 options:
   root_password: ""
   database: "homeassistant"
