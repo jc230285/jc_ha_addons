@@ -5,9 +5,6 @@
 
 # Read options from Home Assistant add-on config
 ROOT_PWD=$(bashio::config 'root_password')
-DB_NAME=$(bashio::config 'database')
-DB_USER=$(bashio::config 'user')
-DB_PASS=$(bashio::config 'user_password')
 REPL_USER=$(bashio::config 'replicate_user')
 REPL_PASS=$(bashio::config 'replicate_password')
 
@@ -28,13 +25,44 @@ FLUSH PRIVILEGES;
 EOF
 fi
 
-# Create database and user if not exist
-mysql -uroot ${ROOT_PWD:+-p"$ROOT_PWD"} <<EOF
-CREATE DATABASE IF NOT EXISTS \`$DB_NAME\`;
-CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASS';
-GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO '$DB_USER'@'%';
+# Create databases
+for database in $(bashio::config 'databases'); do
+    bashio::log.info "Creating database: ${database}"
+    mysql -uroot ${ROOT_PWD:+-p"$ROOT_PWD"} <<EOF
+CREATE DATABASE IF NOT EXISTS \`${database}\`;
+EOF
+done
+
+# Create users
+for user in $(bashio::config 'users|keys'); do
+    username=$(bashio::config "users[${user}].username")
+    password=$(bashio::config "users[${user}].password")
+    bashio::log.info "Creating user: ${username}"
+    mysql -uroot ${ROOT_PWD:+-p"$ROOT_PWD"} <<EOF
+CREATE USER IF NOT EXISTS '${username}'@'%' IDENTIFIED BY '${password}';
+EOF
+done
+
+# Grant rights
+for right in $(bashio::config 'rights|keys'); do
+    username=$(bashio::config "rights[${right}].username")
+    database=$(bashio::config "rights[${right}].database")
+    bashio::log.info "Granting rights for ${username} on ${database}"
+    mysql -uroot ${ROOT_PWD:+-p"$ROOT_PWD"} <<EOF
+GRANT ALL PRIVILEGES ON \`${database}\`.* TO '${username}'@'%';
+EOF
+done
+
+# Create replication user for Galera
+if [ -n "$REPL_USER" ] && [ -n "$REPL_PASS" ]; then
+    bashio::log.info "Creating replication user for Galera"
+    mysql -uroot ${ROOT_PWD:+-p"$ROOT_PWD"} <<EOF
 CREATE USER IF NOT EXISTS '$REPL_USER'@'%' IDENTIFIED BY '$REPL_PASS';
 GRANT RELOAD, LOCK TABLES, PROCESS, REPLICATION CLIENT ON *.* TO '$REPL_USER'@'%';
+EOF
+fi
+
+mysql -uroot ${ROOT_PWD:+-p"$ROOT_PWD"} <<EOF
 FLUSH PRIVILEGES;
 EOF
 

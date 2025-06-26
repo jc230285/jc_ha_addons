@@ -16,10 +16,19 @@ services:
   - mysql:provide
 
 options:
+  databases:
+    - homeassistant
+  users:
+    - username: homeassistant
+      password: ""
+  rights:
+    - username: homeassistant
+      database: homeassistant
+  logins:
+    - username: homeassistant
+      password: ""
+  # Galera cluster options
   root_password: ""
-  database: "homeassistant"
-  user: ""
-  user_password: ""
   replicate_from_ip: "192.168.68.2"
   replicate_user: "replicator"
   replicate_password: ""
@@ -28,13 +37,21 @@ options:
   cluster_name: "haos_cluster"
 
 schema:
-  root_password: str
-  database: str
-  user: str
-  user_password: str
-  replicate_from_ip: str
-  replicate_user: str
-  replicate_password: str
-  node_name: str
-  node_address: str
-  cluster_name: str
+  databases:
+    - str
+  users:
+    - username: str
+      password: str
+  rights:
+    - username: str
+      database: str
+  logins:
+    - username: str
+      password: str
+  root_password: "str?"
+  replicate_from_ip: "str?"
+  replicate_user: "str?"
+  replicate_password: "str?"
+  node_name: "str?"
+  node_address: "str?"
+  cluster_name: "str?"
