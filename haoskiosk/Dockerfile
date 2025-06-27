@@ -20,6 +20,11 @@ RUN apk update && apk add --no-cache \
     xf86-video-nouveau \
     xf86-input-evdev \
     xf86-input-libinput \
+    mesa-dri-gallium \
+    mesa-gl \
+    mesa-gles \
+    mesa-egl \
+    libgl \
     openbox \
     ttf-dejavu \
     util-linux \
