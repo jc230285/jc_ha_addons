@@ -19,14 +19,28 @@ ingress: true
 devices:
   - /dev/fb0
   - /dev/fb1
+  - /dev/dri
   - /dev/input/event0
   - /dev/input/event1
+  - /dev/input/event2
+  - /dev/input/event3
+  - /dev/input/mice
+  - /dev/input/mouse0
+  - /dev/input/mouse1
+  - /dev/tty0
+  - /dev/tty1
+  - /dev/tty7
+  - /dev/vc-mem
+  - /dev/vchiq
+  - /dev/vcsm-cma
 
 privileged:
   - SYS_ADMIN
 
 options:
-  ha_url: "http://localhost:8123"
+  ha_username: ""
+  ha_password: ""
+  ha_url: "https://ha.collinscreations.co.uk/dashboard-home/0"
   ha_dashboard: ""
   login_delay: 1.0
   zoom_level: 100

@@ -14,7 +14,12 @@ RUN apk update && apk add --no-cache \
     luakit \
     xorg-server \
     xf86-video-fbdev \
+    xf86-video-intel \
+    xf86-video-amdgpu \
+    xf86-video-ati \
+    xf86-video-nouveau \
     xf86-input-evdev \
+    xf86-input-libinput \
     openbox \
     ttf-dejavu \
     util-linux \

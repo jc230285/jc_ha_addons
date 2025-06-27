@@ -8,8 +8,8 @@ bashio::log.info "Starting qBittorrent..."
 # Create default configuration if it doesn't exist
 if [[ ! -f /config/qBittorrent/qBittorrent.conf ]]; then
     bashio::log.info "Creating default qBittorrent configuration..."
-    mkdir -p /config/qbittorrent
-    cat > /config/qbittorrent/qbittorrent.conf << EOL
+    mkdir -p /config/qBittorrent
+    cat > /config/qBittorrent/qBittorrent.conf << EOL
 [AutoRun]
 enabled=false
 
