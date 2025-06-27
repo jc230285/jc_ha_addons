@@ -133,9 +133,17 @@ if ! xset q >/dev/null 2>&1; then
 fi
 bashio::log.info "X started successfully..."
 
+# Wait for displays to be ready
+sleep 2
+
+# Check available displays
+bashio::log.info "Available displays:"
+xrandr | bashio::log.info
+
 # Configure displays with xrandr to use BenQ monitor
-xrandr --output HDMI-A-1 --off
-xrandr --output HDMI-A-2 --auto --primary
+bashio::log.info "Configuring displays..."
+xrandr --output HDMI-A-1 --off 2>&1 | bashio::log.info || true
+xrandr --output HDMI-A-2 --auto --primary 2>&1 | bashio::log.info || true
 bashio::log.info "Configured display to use BenQ monitor on HDMI-A-2..."
 
 #Stop console blinking cursor (this projects through the X-screen)
