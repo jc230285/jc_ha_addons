@@ -30,6 +30,7 @@ RUN apk update && apk add --no-cache \
     util-linux \
     xset \
     xdotool \
+    xrandr \
     bash \
     && rm -rf /var/cache/apk/*
 

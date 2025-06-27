@@ -133,6 +133,11 @@ if ! xset q >/dev/null 2>&1; then
 fi
 bashio::log.info "X started successfully..."
 
+# Configure displays with xrandr to use BenQ monitor
+xrandr --output HDMI-A-1 --off
+xrandr --output HDMI-A-2 --auto --primary
+bashio::log.info "Configured display to use BenQ monitor on HDMI-A-2..."
+
 #Stop console blinking cursor (this projects through the X-screen)
 echo -e "\033[?25l" > /dev/console
 
