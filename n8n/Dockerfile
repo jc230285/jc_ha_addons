@@ -41,6 +41,10 @@ RUN mkdir -p \
 # Copy root filesystem
 COPY rootfs /
 
+# Override any existing entrypoint
+ENTRYPOINT []
+CMD []
+
 # Build arguments
 ARG BUILD_DATE
 ARG BUILD_DESCRIPTION
