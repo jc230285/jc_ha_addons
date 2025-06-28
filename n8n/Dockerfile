@@ -8,26 +8,19 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Setup base
 ARG BUILD_ARCH=amd64
 ARG BUILD_VERSION=dev
-ARG N8N_VERSION=1.70.0
 ENV NODE_ENV=production
-ENV N8N_USER_FOLDER="/data"
-ENV N8N_CONFIG_FILES="/data"
 
-# hadolint ignore=DL3003,DL3042
+# Install n8n directly from the official Docker image
 RUN \
   apk add --no-cache \
     curl \
     jq \
     nodejs \
     npm \
-    python3 \
-    make \
-    g++ \
-    git \
   \
-  && npm install -g n8n@${N8N_VERSION} \
-  && which n8n \
-  && n8n --version \
+  && npm install -g n8n@1.70.0 --unsafe-perm \
+  && npm cache clean --force \
+  && npm cache clean --force \
   \
   && echo -e "UpdateMethod=docker\nBranch=master\nPackageVersion=${BUILD_VERSION}\nPackageAuthor=James Criswell Add-ons" \
     > /opt/package_info \
@@ -36,9 +29,14 @@ RUN \
     /tmp/* \
     /root/.npm
 
+# Set n8n environment variables
+ENV N8N_USER_FOLDER="/data"
+ENV N8N_CONFIG_FILES="/data"
+ENV N8N_HOST="0.0.0.0"
+ENV N8N_PORT="5678"
+
 # Create directories
-RUN mkdir -p \
-    /data
+RUN mkdir -p /data
 
 # Copy root filesystem
 COPY rootfs /
