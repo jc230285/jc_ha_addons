@@ -3,12 +3,20 @@
 # Start n8n service
 # ==============================================================================
 
-bashio::log.info "Starting n8n..."
+bashio::log.info "=== N8N SERVICE STARTING ==="
+bashio::log.info "Current working directory: $(pwd)"
+bashio::log.info "User: $(whoami)"
+bashio::log.info "PATH: ${PATH}"
+
+# Test if bashio is working
+bashio::log.info "Bashio is working!"
 
 # Get configuration options
 TIMEZONE=$(bashio::config 'timezone' 'UTC')
 WEBHOOK_URL=$(bashio::config 'webhook_url' '')
 ENCRYPTION_KEY=$(bashio::config 'encryption_key' '')
+
+bashio::log.info "Configuration loaded: timezone=${TIMEZONE}"
 
 # Set timezone if provided
 if [[ -n "${TIMEZONE}" ]]; then
@@ -39,12 +47,24 @@ export N8N_USER_FOLDER="/data"
 export N8N_CONFIG_FILES="/data"
 
 # Create data directory structure
+bashio::log.info "Creating data directories..."
 mkdir -p /data/.n8n
 chown -R root:root /data
 
 # Change to data directory
 cd /data || bashio::exit.nok "Could not change to data directory"
 
+# Check n8n installation
+bashio::log.info "Checking n8n installation..."
+if command -v n8n >/dev/null 2>&1; then
+    bashio::log.info "n8n found at: $(which n8n)"
+    n8n --version 2>&1 | bashio::log.info
+else
+    bashio::log.error "n8n command not found!"
+    ls -la /usr/local/bin/ | grep n8n | bashio::log.info || bashio::log.error "No n8n in /usr/local/bin"
+    bashio::exit.nok "n8n not installed properly"
+fi
+
 # Start n8n
 bashio::log.info "Starting n8n workflow automation..."
-exec /usr/bin/n8n start
+exec n8n start
