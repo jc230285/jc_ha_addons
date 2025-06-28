@@ -26,6 +26,8 @@ RUN \
     git \
   \
   && npm install -g n8n@${N8N_VERSION} \
+  && which n8n \
+  && n8n --version \
   \
   && echo -e "UpdateMethod=docker\nBranch=master\nPackageVersion=${BUILD_VERSION}\nPackageAuthor=James Criswell Add-ons" \
     > /opt/package_info \
@@ -40,10 +42,6 @@ RUN mkdir -p \
 
 # Copy root filesystem
 COPY rootfs /
-
-# Override any existing entrypoint
-ENTRYPOINT []
-CMD []
 
 # Build arguments
 ARG BUILD_DATE

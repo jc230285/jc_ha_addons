@@ -6,9 +6,9 @@
 bashio::log.info "Starting n8n..."
 
 # Get configuration options
-TIMEZONE=$(bashio::config 'timezone')
-WEBHOOK_URL=$(bashio::config 'webhook_url')
-ENCRYPTION_KEY=$(bashio::config 'encryption_key')
+TIMEZONE=$(bashio::config 'timezone' 'UTC')
+WEBHOOK_URL=$(bashio::config 'webhook_url' '')
+ENCRYPTION_KEY=$(bashio::config 'encryption_key' '')
 
 # Set timezone if provided
 if [[ -n "${TIMEZONE}" ]]; then
@@ -21,6 +21,8 @@ fi
 if [[ -n "${WEBHOOK_URL}" ]]; then
     export WEBHOOK_URL="${WEBHOOK_URL}"
     bashio::log.info "Setting webhook URL to ${WEBHOOK_URL}"
+else
+    export WEBHOOK_URL="http://localhost:5678/"
 fi
 
 # Set encryption key if provided
@@ -40,6 +42,9 @@ export N8N_CONFIG_FILES="/data"
 mkdir -p /data/.n8n
 chown -R root:root /data
 
+# Change to data directory
+cd /data || bashio::exit.nok "Could not change to data directory"
+
 # Start n8n
 bashio::log.info "Starting n8n workflow automation..."
-exec n8n start
+exec /usr/bin/n8n start
