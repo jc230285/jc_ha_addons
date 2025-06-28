@@ -24,7 +24,6 @@ RUN \
     make \
     g++ \
     git \
-    tini \
   \
   && npm install -g n8n@${N8N_VERSION} \
   \
@@ -72,6 +71,3 @@ VOLUME ["/data"]
 
 # Expose ports
 EXPOSE 5678
-
-# Use tini as entrypoint
-ENTRYPOINT ["/sbin/tini", "--"]
