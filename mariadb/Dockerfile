@@ -32,6 +32,9 @@ COPY rootfs /
 RUN chmod +x /usr/bin/galera-debug \
     && chmod +x /usr/bin/galera-bootstrap \
     && chmod +x /usr/bin/lock-tables-for-backup \
-    && chmod +x /usr/bin/unlock-tables-for-backup
+    && chmod +x /usr/bin/unlock-tables-for-backup \
+    && chmod +x /etc/s6-overlay/s6-rc.d/*/run \
+    && chmod +x /etc/s6-overlay/s6-rc.d/*/* \
+    && chmod +x /etc/s6-overlay/s6-rc.d/*/*/*
 
 WORKDIR /
