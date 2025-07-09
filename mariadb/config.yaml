@@ -1,5 +1,5 @@
 ---
-version: 2.7.4
+version: 2.7.5
 slug: mariadb
 name: MariaDB
 description: A SQL database server with Galera clustering support
@@ -12,7 +12,6 @@ arch:
   - i386
 backup_post: unlock-tables-for-backup
 backup_pre: lock-tables-for-backup
-image: homeassistant/{arch}-addon-mariadb
 init: false
 options:
   databases:
