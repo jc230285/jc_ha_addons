@@ -1,16 +1,26 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Setup base
+# Install MariaDB with Galera from official repositories
 RUN apk add --no-cache \
     mariadb \
     mariadb-client \
     mariadb-server-utils \
     mariadb-connector-c \
+    mariadb-backup \
     galera \
     socat \
     rsync \
-    pwgen
+    pwgen \
+    netcat-openbsd
+
+# Install Galera from source if needed for better port binding
+RUN apk add --no-cache --virtual .build-deps \
+    build-base \
+    cmake \
+    boost-dev \
+    openssl-dev \
+    && apk del .build-deps
 
 ENV \
     LD_PRELOAD="/usr/local/lib/libjemalloc.so.2"
