@@ -60,37 +60,37 @@ if bashio::config.true 'galera_enabled'; then
     # Create Galera configuration directory (use the correct path for Alpine MariaDB)
     mkdir -p /etc/my.cnf.d
 
-    # Create Galera configuration
-    cat > /etc/my.cnf.d/60-galera.cnf << EOF
-[galera]
+    # Instead of creating a separate file, append Galera config to the main server config
+    # This ensures MariaDB loads it from the start
+    cat >> /etc/my.cnf.d/mariadb-server.cnf << EOF
+
+# Galera Cluster Configuration (Auto-generated)
+[mysqld]
 # Galera Provider Configuration
 wsrep_on=ON
 wsrep_provider=/usr/lib/galera/libgalera_smm.so
 
 # Galera Cluster Configuration
-wsrep_cluster_name="${CLUSTER_NAME}"
-wsrep_cluster_address="gcomm://${CLUSTER_ADDRESS}"
+wsrep_cluster_name=${CLUSTER_NAME}
+wsrep_cluster_address=gcomm://${CLUSTER_ADDRESS}
 
 # Galera Synchronization Configuration
 wsrep_sst_method=rsync
 
 # Galera Node Configuration
-wsrep_node_address="${NODE_ADDRESS}"
-wsrep_node_name="${NODE_NAME}"
+wsrep_node_address=${NODE_ADDRESS}
+wsrep_node_name=${NODE_NAME}
 
 # Galera Port Configuration
 # Force all Galera ports to bind to all interfaces (0.0.0.0)
-# This ensures proper connectivity for cluster communication
-wsrep_provider_options="gmcast.listen_addr=tcp://0.0.0.0:4567;ist.recv_addr=0.0.0.0:4568;socket.checksum=0"
+wsrep_provider_options=gmcast.listen_addr=tcp://0.0.0.0:4567;ist.recv_addr=0.0.0.0:4568;socket.checksum=0
 
 # SST (State Snapshot Transfer) configuration
-# Use 0.0.0.0 to bind to all interfaces for SST
-wsrep_sst_receive_address="0.0.0.0:4444"
+wsrep_sst_receive_address=0.0.0.0:4444
 wsrep_sst_donor_rejects_queries=OFF
 
 # IST (Incremental State Transfer) configuration
-# Bind IST to all interfaces as well
-wsrep_node_incoming_address="0.0.0.0"
+wsrep_node_incoming_address=0.0.0.0
 
 # Additional settings for Galera compatibility
 binlog_format=row
@@ -103,11 +103,12 @@ innodb_flush_log_at_trx_commit=2
 query_cache_type=0
 query_cache_size=0
 
-# Slave lag settings
+# Galera tuning
 wsrep_slave_threads=1
 wsrep_certify_nonPK=1
 wsrep_max_ws_rows=131072
 wsrep_max_ws_size=1073741824
+EOF
 wsrep_debug=0
 wsrep_convert_LOCK_to_trx=0
 wsrep_retry_autocommit=1
@@ -115,20 +116,30 @@ wsrep_auto_increment_control=1
 
 EOF
 
+    # Add SST authentication if password is provided
     if [ -n "${SST_PASSWORD}" ]; then
-        echo "wsrep_sst_auth=${SST_USER}:${SST_PASSWORD}" >> /etc/mysql/mariadb.conf.d/60-galera.cnf
+        echo "wsrep_sst_auth=${SST_USER}:${SST_PASSWORD}" >> /etc/my.cnf.d/mariadb-server.cnf
     fi
 
     bashio::log.info "Galera configuration generated successfully"
     bashio::log.info "Node: ${NODE_NAME} (${NODE_ADDRESS})"
     bashio::log.info "Cluster: ${CLUSTER_NAME}"
     bashio::log.info "Cluster nodes: ${CLUSTER_ADDRESS}"
-
-    # Log the generated configuration for debugging
     bashio::log.info "Generated Galera configuration:"
-    cat /etc/mysql/mariadb.conf.d/60-galera.cnf | grep -E "(wsrep_provider_options|wsrep_sst_receive_address|wsrep_node_incoming_address)" | while read line; do
-        bashio::log.info "  ${line}"
-    done
+    bashio::log.info "  wsrep_provider_options=\"gmcast.listen_addr=tcp://0.0.0.0:4567;ist.recv_addr=0.0.0.0:4568;socket.checksum=0\""
+    bashio::log.info "  wsrep_sst_receive_address=\"0.0.0.0:4444\""
+    bashio::log.info "  wsrep_node_incoming_address=\"0.0.0.0\""
+
+    # Verify the configuration file was created
+    if [ -f /etc/my.cnf.d/mariadb-server.cnf ]; then
+        bashio::log.info "✅ Galera config appended to /etc/my.cnf.d/mariadb-server.cnf"
+        bashio::log.info "Full MariaDB config file:"
+        tail -20 /etc/my.cnf.d/mariadb-server.cnf | while read line; do
+            bashio::log.info "  $line"
+        done
+    else
+        bashio::log.error "❌ MariaDB config file NOT found!"
+    fi
 else
     # Remove Galera configuration if it exists but is disabled
     rm -f /etc/mysql/mariadb.conf.d/60-galera.cnf

@@ -189,6 +189,30 @@ if bashio::config.true 'galera_enabled'; then
         mysql -e "SHOW STATUS LIKE 'wsrep_local_state_comment';" 2>/dev/null || true
         mysql -e "SHOW STATUS LIKE 'wsrep_cluster_size';" 2>/dev/null || true
         mysql -e "SHOW STATUS LIKE 'wsrep_provider_name';" 2>/dev/null || true
+
+        # Wait for cluster to initialize and check cluster size
+        bashio::log.info "⏳ Waiting for Galera cluster to initialize..."
+        for i in {1..30}; do
+            sleep 2
+            CLUSTER_SIZE=$(mysql -e "SHOW STATUS LIKE 'wsrep_cluster_size';" --skip-column-names 2>/dev/null | awk '{print $2}' || echo "0")
+            LOCAL_STATE=$(mysql -e "SHOW STATUS LIKE 'wsrep_local_state_comment';" --skip-column-names 2>/dev/null | awk '{print $2}' || echo "Unknown")
+
+            bashio::log.info "🔍 Check ${i}/30: Cluster size: ${CLUSTER_SIZE}, Local state: ${LOCAL_STATE}"
+
+            if [ "$CLUSTER_SIZE" -gt 0 ] && [ "$LOCAL_STATE" = "Synced" ]; then
+                bashio::log.info "🎉 Galera cluster is ready! Cluster size: ${CLUSTER_SIZE}, State: ${LOCAL_STATE}"
+                break
+            elif [ "$CLUSTER_SIZE" -gt 0 ]; then
+                bashio::log.info "⚡ Cluster detected (size: ${CLUSTER_SIZE}) but not fully synced yet (state: ${LOCAL_STATE})"
+            else
+                bashio::log.info "⏳ Still waiting for cluster connection..."
+            fi
+
+            if [ $i -eq 30 ]; then
+                bashio::log.warning "⚠️  Cluster initialization timeout after 60 seconds. Current state: size=${CLUSTER_SIZE}, state=${LOCAL_STATE}"
+                bashio::log.info "This is normal for the first node in a new cluster, or if other nodes are not yet available."
+            fi
+        done
     fi
 fi
 
