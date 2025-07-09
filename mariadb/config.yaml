@@ -17,19 +17,19 @@ options:
   databases:
     - homeassistant
   logins:
-    - password: null
+    - password: "K3yb0ard!!P"
       username: homeassistant
   rights:
     - database: homeassistant
       username: homeassistant
   # Galera cluster options
-  galera_enabled: false
+  galera_enabled: true
   cluster_name: "homeassistant_cluster"
-  node_name: "node1"
-  node_address: ""
-  cluster_address: ""
+  node_name: "minipc"
+  node_address: "192.168.71.215"
+  cluster_address: "gcomm://192.168.71.215,192.168.68.2"
   wsrep_sst_user: "wsrep_sst"
-  wsrep_sst_password: ""
+  wsrep_sst_password: "K3yb0ard!!P"
 ports:
   3306/tcp: 3306
   4567/tcp: 4567
