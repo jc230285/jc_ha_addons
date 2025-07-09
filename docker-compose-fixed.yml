@@ -1,0 +1,29 @@
+services:
+  mariadb-galera:
+    image: bitnami/mariadb-galera:latest
+    container_name: mariadb_galera_homenas
+    restart: always
+    environment:
+      - MARIADB_GALERA_CLUSTER_NAME=homeassistant_cluster
+      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://192.168.71.215
+      - MARIADB_GALERA_NODE_NAME=homenas
+      - MARIADB_GALERA_NODE_ADDRESS=192.168.68.2
+      - MARIADB_ROOT_PASSWORD=K3yb0ard!!P
+      - MARIADB_DATABASE=homeassistant
+      - MARIADB_USER=homeassistant
+      - MARIADB_PASSWORD=K3yb0ard!!P
+      - MARIADB_GALERA_MARIABACKUP_USER=wsrep_sst
+      - MARIADB_GALERA_MARIABACKUP_PASSWORD=K3yb0ard!!P
+    ports:
+      - "3306:3306" # MariaDB
+      - "4567:4567" # Galera Cluster
+      - "4568:4568" # IST
+      - "4444:4444" # SST
+    volumes:
+      - /volume1/docker/database/mariadb-galera/homenas/data:/bitnami/mariadb
+    networks:
+      - galera_net
+
+networks:
+  galera_net:
+    driver: bridge

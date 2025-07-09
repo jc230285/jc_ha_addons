@@ -29,6 +29,9 @@ else
 fi
 
 # Generate Galera configuration if enabled
+bashio::log.info "Checking Galera configuration..."
+bashio::log.info "galera_enabled config value: $(bashio::config 'galera_enabled' 'false')"
+
 if bashio::config.true 'galera_enabled'; then
     bashio::log.info "Galera clustering is enabled, generating configuration..."
 
@@ -81,11 +84,13 @@ wsrep_node_name="${NODE_NAME}"
 wsrep_provider_options="gmcast.listen_addr=tcp://0.0.0.0:4567;ist.recv_addr=0.0.0.0:4568;socket.checksum=0"
 
 # SST (State Snapshot Transfer) configuration
+# Use 0.0.0.0 to bind to all interfaces for SST
 wsrep_sst_receive_address="0.0.0.0:4444"
 wsrep_sst_donor_rejects_queries=OFF
 
-# Ensure IST (Incremental State Transfer) uses correct address
-wsrep_node_incoming_address="${NODE_ADDRESS}"
+# IST (Incremental State Transfer) configuration
+# Bind IST to all interfaces as well
+wsrep_node_incoming_address="0.0.0.0"
 
 # Additional settings for Galera compatibility
 binlog_format=row
@@ -118,6 +123,12 @@ EOF
     bashio::log.info "Node: ${NODE_NAME} (${NODE_ADDRESS})"
     bashio::log.info "Cluster: ${CLUSTER_NAME}"
     bashio::log.info "Cluster nodes: ${CLUSTER_ADDRESS}"
+
+    # Log the generated configuration for debugging
+    bashio::log.info "Generated Galera configuration:"
+    cat /etc/mysql/mariadb.conf.d/60-galera.cnf | grep -E "(wsrep_provider_options|wsrep_sst_receive_address|wsrep_node_incoming_address)" | while read line; do
+        bashio::log.info "  ${line}"
+    done
 else
     # Remove Galera configuration if it exists but is disabled
     rm -f /etc/mysql/mariadb.conf.d/60-galera.cnf
