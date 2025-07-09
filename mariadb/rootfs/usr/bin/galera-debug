@@ -53,11 +53,20 @@ check_galera_ports() {
         if pgrep mysqld > /dev/null; then
             bashio::log.info "=== Galera Status ==="
             mysql -e "SHOW STATUS LIKE 'wsrep%';" 2>/dev/null || bashio::log.warning "Could not retrieve Galera status"
+
+            bashio::log.info "=== Galera Variables ==="
+            mysql -e "SHOW VARIABLES LIKE 'wsrep%';" 2>/dev/null || bashio::log.warning "Could not retrieve Galera variables"
+
+            bashio::log.info "=== Galera Provider Status ==="
+            mysql -e "SELECT @@wsrep_on, @@wsrep_provider, @@wsrep_cluster_name, @@wsrep_node_name;" 2>/dev/null || bashio::log.warning "Could not retrieve provider info"
         fi
     fi
 
     bashio::log.info "=== Network Interface Status ==="
     ip addr show
+
+    bashio::log.info "=== All Listening Ports ==="
+    netstat -tuln 2>/dev/null || ss -tuln 2>/dev/null || bashio::log.warning "Could not list ports"
 }
 
 # Main execution
