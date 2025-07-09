@@ -57,11 +57,11 @@ if bashio::config.true 'galera_enabled'; then
         bashio::log.warning "Galera enabled but wsrep_sst_password is not set. This may cause SST issues."
     fi
 
-    # Create Galera configuration directory
-    mkdir -p /etc/mysql/mariadb.conf.d
+    # Create Galera configuration directory (use the correct path for Alpine MariaDB)
+    mkdir -p /etc/my.cnf.d
 
     # Create Galera configuration
-    cat > /etc/mysql/mariadb.conf.d/60-galera.cnf << EOF
+    cat > /etc/my.cnf.d/60-galera.cnf << EOF
 [galera]
 # Galera Provider Configuration
 wsrep_on=ON

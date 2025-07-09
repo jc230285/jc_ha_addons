@@ -42,9 +42,9 @@ check_galera_ports() {
     # Show active Galera configuration if enabled
     if bashio::config.true 'galera_enabled'; then
         bashio::log.info "=== Galera Configuration ==="
-        if [ -f /etc/mysql/mariadb.conf.d/60-galera.cnf ]; then
+        if [ -f /etc/my.cnf.d/60-galera.cnf ]; then
             bashio::log.info "Galera config file exists:"
-            cat /etc/mysql/mariadb.conf.d/60-galera.cnf
+            cat /etc/my.cnf.d/60-galera.cnf
         else
             bashio::log.warning "Galera config file not found"
         fi
