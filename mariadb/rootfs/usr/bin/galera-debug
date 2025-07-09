@@ -1,0 +1,69 @@
+#!/command/with-contenv bashio
+# vim: ft=bash
+# shellcheck shell=bash
+# ==============================================================================
+# Galera port connectivity checker
+# ==============================================================================
+
+check_galera_ports() {
+    local node_address="${1:-127.0.0.1}"
+
+    bashio::log.info "Checking Galera port connectivity on ${node_address}..."
+
+    # Check if ports are listening
+    bashio::log.info "=== Port Listening Status ==="
+    for port in 3306 4567 4568 4444; do
+        if netstat -tuln 2>/dev/null | grep -q ":${port} "; then
+            bashio::log.info "✅ Port ${port}: Listening"
+        else
+            bashio::log.warning "❌ Port ${port}: Not listening"
+        fi
+    done
+
+    # Check if we can connect to ports locally
+    bashio::log.info "=== Local Connectivity Test ==="
+    for port in 4567 4568 4444; do
+        if timeout 3 bash -c "</dev/tcp/${node_address}/${port}" 2>/dev/null; then
+            bashio::log.info "✅ Port ${port}: Connectable on ${node_address}"
+        else
+            bashio::log.warning "❌ Port ${port}: Cannot connect to ${node_address}"
+        fi
+    done
+
+    # Show current MariaDB process and configuration
+    bashio::log.info "=== MariaDB Process Status ==="
+    if pgrep mysqld > /dev/null; then
+        bashio::log.info "✅ MariaDB process is running"
+        ps aux | grep mysqld | grep -v grep
+    else
+        bashio::log.warning "❌ MariaDB process is not running"
+    fi
+
+    # Show active Galera configuration if enabled
+    if bashio::config.true 'galera_enabled'; then
+        bashio::log.info "=== Galera Configuration ==="
+        if [ -f /etc/mysql/mariadb.conf.d/60-galera.cnf ]; then
+            bashio::log.info "Galera config file exists:"
+            cat /etc/mysql/mariadb.conf.d/60-galera.cnf
+        else
+            bashio::log.warning "Galera config file not found"
+        fi
+
+        # Show Galera status if MariaDB is running
+        if pgrep mysqld > /dev/null; then
+            bashio::log.info "=== Galera Status ==="
+            mysql -e "SHOW STATUS LIKE 'wsrep%';" 2>/dev/null || bashio::log.warning "Could not retrieve Galera status"
+        fi
+    fi
+
+    bashio::log.info "=== Network Interface Status ==="
+    ip addr show
+}
+
+# Main execution
+if [ "${1}" = "check" ]; then
+    check_galera_ports "${2}"
+else
+    bashio::log.info "Usage: galera-debug check [node_address]"
+    bashio::log.info "Example: galera-debug check 192.168.1.100"
+fi

@@ -182,7 +182,11 @@ wsrep_sst_password: "your_strong_sst_password"
 - **Quorum**: For automatic split-brain protection, use an odd number of nodes (3, 5, 7, etc.)
 - **Bootstrapping**: Only the first node bootstraps the cluster. Additional nodes join automatically
 - **State Transfer**: New nodes will automatically sync data from existing nodes
-- **Network**: Ensure ports 3306 (MySQL) and 4567 (Galera) are accessible between nodes
+- **Network**: Ensure these ports are accessible between nodes:
+  - Port 3306: MySQL client connections
+  - Port 4567: Galera replication traffic
+  - Port 4568: Incremental State Transfer (IST)
+  - Port 4444: State Snapshot Transfer (SST)
 - **Consistency**: All writes are synchronously replicated to all nodes
 
 ### Monitoring Cluster Status
@@ -202,9 +206,91 @@ Key status variables:
 
 ### Troubleshooting
 
-- **Split-brain**: If the cluster splits, check network connectivity and restart nodes
-- **SST Issues**: Verify SST user credentials are identical on all nodes
-- **Bootstrap Issues**: If cluster won't start, check that only one node is bootstrapping
+#### Common Issues
+
+**Split-brain**: If the cluster splits, check network connectivity and restart nodes
+
+**SST Issues**: Verify SST user credentials are identical on all nodes
+
+**Bootstrap Issues**: If cluster won't start, check that only one node is bootstrapping
+
+#### Galera Port Connectivity Issues
+
+Galera clustering requires specific ports to be accessible between nodes:
+
+- **Port 3306**: MySQL client connections
+- **Port 4567**: Galera replication traffic (gcomm)
+- **Port 4568**: Incremental State Transfer (IST)
+- **Port 4444**: State Snapshot Transfer (SST)
+
+**Symptoms**: Only port 3306 is reachable, but Galera ports (4567, 4568, 4444) are not accessible.
+
+**Causes**:
+
+1. Host firewall blocking Galera ports
+2. Network configuration issues
+3. Container networking problems
+
+**Solutions**:
+
+1. **Check container port exposure**: The addon automatically exposes the required ports, but verify with:
+
+   ```bash
+   docker ps | grep mariadb
+   ```
+
+2. **Verify ports are listening**: Inside the MariaDB container, run:
+
+   ```bash
+   galera-debug check [node_ip_address]
+   ```
+
+3. **Check host firewall** (if using host network mode):
+
+   ```bash
+   # Ubuntu/Debian
+   sudo ufw status
+   sudo ufw allow 4567
+   sudo ufw allow 4568
+   sudo ufw allow 4444
+
+   # CentOS/RHEL
+   sudo firewall-cmd --list-ports
+   sudo firewall-cmd --permanent --add-port=4567/tcp
+   sudo firewall-cmd --permanent --add-port=4568/tcp
+   sudo firewall-cmd --permanent --add-port=4444/tcp
+   sudo firewall-cmd --reload
+   ```
+
+4. **Network connectivity test**: From one node, test connectivity to another:
+
+   ```bash
+   telnet 192.168.1.101 4567
+   telnet 192.168.1.101 4568
+   telnet 192.168.1.101 4444
+   ```
+
+5. **Check MariaDB Galera configuration**: Verify that Galera is properly configured:
+   ```sql
+   SHOW VARIABLES LIKE 'wsrep%';
+   SHOW STATUS LIKE 'wsrep%';
+   ```
+
+#### Debugging Tools
+
+The addon includes a built-in debugging tool. Inside the container, run:
+
+```bash
+galera-debug check [node_ip_address]
+```
+
+This will:
+
+- Check if all required ports are listening
+- Test local connectivity to Galera ports
+- Show MariaDB process status
+- Display current Galera configuration
+- Show Galera cluster status
 
 ## Home Assistant Configuration
 

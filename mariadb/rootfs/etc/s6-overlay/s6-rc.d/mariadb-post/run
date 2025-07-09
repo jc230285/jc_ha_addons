@@ -121,6 +121,36 @@ if bashio::config.true 'galera_enabled'; then
     else
         bashio::log.warning "Galera is enabled but wsrep_sst_password is not set. SST user will not be created."
     fi
+
+    # Verify Galera ports are properly bound
+    bashio::log.info "Verifying Galera port connectivity..."
+    sleep 2  # Give MariaDB time to fully initialize Galera
+
+    # Check if Galera ports are listening
+    GALERA_PORTS_OK=true
+    for port in 4567 4568 4444; do
+        if netstat -tuln 2>/dev/null | grep -q ":${port} "; then
+            bashio::log.info "✅ Galera port ${port}: Listening"
+        else
+            bashio::log.error "❌ Galera port ${port}: Not listening"
+            GALERA_PORTS_OK=false
+        fi
+    done
+
+    if [ "$GALERA_PORTS_OK" = true ]; then
+        bashio::log.info "🎉 All Galera ports are properly bound and listening"
+    else
+        bashio::log.warning "⚠️  Some Galera ports are not listening. Cluster communication may fail."
+        bashio::log.info "You can run 'galera-debug check' inside the container for detailed diagnostics"
+    fi
+
+    # Show Galera status
+    if mysql -e "SHOW STATUS LIKE 'wsrep_ready';" 2>/dev/null | grep -q "ON"; then
+        bashio::log.info "✅ Galera is ready and operational"
+        mysql -e "SHOW STATUS LIKE 'wsrep_%';" 2>/dev/null | head -10
+    else
+        bashio::log.warning "⚠️  Galera may not be fully initialized yet"
+    fi
 fi
 
 # Flush privileges

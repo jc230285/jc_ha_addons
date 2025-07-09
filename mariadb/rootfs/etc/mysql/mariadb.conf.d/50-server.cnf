@@ -45,6 +45,12 @@ server-id = 1
 # Performance settings
 thread_cache_size = 8
 
+# Galera port bindings (when Galera is enabled)
+# These ensure Galera can bind to all necessary ports on all interfaces
+# Port 4567: Galera replication traffic (gmcast)
+# Port 4568: Incremental State Transfer (IST)
+# Port 4444: State Snapshot Transfer (SST)
+
 # Disable external file access
 secure_file_priv = NULL
 

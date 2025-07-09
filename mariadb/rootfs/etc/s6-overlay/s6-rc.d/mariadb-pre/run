@@ -76,7 +76,16 @@ wsrep_node_address="${NODE_ADDRESS}"
 wsrep_node_name="${NODE_NAME}"
 
 # Galera Port Configuration
-wsrep_provider_options="gmcast.listen_addr=tcp://0.0.0.0:4567"
+# Force all Galera ports to bind to all interfaces (0.0.0.0)
+# This ensures proper connectivity for cluster communication
+wsrep_provider_options="gmcast.listen_addr=tcp://0.0.0.0:4567;ist.recv_addr=0.0.0.0:4568;socket.checksum=0"
+
+# SST (State Snapshot Transfer) configuration
+wsrep_sst_receive_address="0.0.0.0:4444"
+wsrep_sst_donor_rejects_queries=OFF
+
+# Ensure IST (Incremental State Transfer) uses correct address
+wsrep_node_incoming_address="${NODE_ADDRESS}"
 
 # Additional settings for Galera compatibility
 binlog_format=row
