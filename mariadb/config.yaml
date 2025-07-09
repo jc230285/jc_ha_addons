@@ -27,7 +27,7 @@ options:
   cluster_name: "homeassistant_cluster"
   node_name: "minipc"
   node_address: "192.168.71.215"
-  cluster_address: "gcomm://192.168.71.215,192.168.68.2"
+  cluster_address: "192.168.71.215,192.168.68.2"
   wsrep_sst_user: "wsrep_sst"
   wsrep_sst_password: "K3yb0ard!!P"
 ports:
