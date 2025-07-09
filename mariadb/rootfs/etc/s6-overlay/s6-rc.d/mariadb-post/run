@@ -161,6 +161,22 @@ if bashio::config.true 'galera_enabled'; then
     else
         bashio::log.warning "⚠️  Some Galera ports are not listening. Cluster communication may fail."
         bashio::log.info "You can run 'galera-debug check' inside the container for detailed diagnostics"
+
+        # Enhanced diagnostics for port issues
+        bashio::log.info "=== Enhanced Galera Diagnostics ==="
+        bashio::log.info "All listening ports:"
+        netstat -tuln 2>/dev/null | grep LISTEN || ss -tuln 2>/dev/null | grep LISTEN || true
+
+        bashio::log.info "Galera provider status:"
+        mysql -e "SELECT @@wsrep_on, @@wsrep_provider, @@wsrep_cluster_name, @@wsrep_node_name;" 2>/dev/null || bashio::log.warning "Could not retrieve provider info"
+
+        bashio::log.info "Galera configuration variables:"
+        mysql -e "SHOW VARIABLES LIKE 'wsrep_provider_options';" 2>/dev/null || true
+        mysql -e "SHOW VARIABLES LIKE 'wsrep_sst_receive_address';" 2>/dev/null || true
+        mysql -e "SHOW VARIABLES LIKE 'wsrep_node_incoming_address';" 2>/dev/null || true
+
+        bashio::log.info "MariaDB process command line:"
+        ps aux | grep mysqld | grep -v grep || true
     fi
 
     # Show Galera status
@@ -169,6 +185,10 @@ if bashio::config.true 'galera_enabled'; then
         mysql -e "SHOW STATUS LIKE 'wsrep_%';" 2>/dev/null | head -10
     else
         bashio::log.warning "⚠️  Galera may not be fully initialized yet"
+        bashio::log.info "Galera status variables:"
+        mysql -e "SHOW STATUS LIKE 'wsrep_local_state_comment';" 2>/dev/null || true
+        mysql -e "SHOW STATUS LIKE 'wsrep_cluster_size';" 2>/dev/null || true
+        mysql -e "SHOW STATUS LIKE 'wsrep_provider_name';" 2>/dev/null || true
     fi
 fi
 
